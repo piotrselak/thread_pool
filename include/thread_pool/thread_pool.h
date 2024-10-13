@@ -1,6 +1,7 @@
 #pragma once
 
+#include <thread>
 
-inline int test_function() {
-  return 1;
-}
+class ThreadPool {
+
+};
