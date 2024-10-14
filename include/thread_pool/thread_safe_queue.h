@@ -13,6 +13,11 @@ public:
 template<typename T>
 class ThreadSafeQueue {
 public:
+    T head() const {
+        std::lock_guard<std::mutex> lock(mtx);
+        return queue_.front();
+    }
+
     void enqueue(T item) {
         std::lock_guard<std::mutex> lock(mtx);
         queue_.push(item);
