@@ -56,8 +56,5 @@ TEST_CASE("ThreadSafeQueue works correctly for concurrent operations") {
 
         CHECK(queue.is_empty());
     }
-
-    SUBCASE("queue elements should keep proper order") {
-    }
 }
 
