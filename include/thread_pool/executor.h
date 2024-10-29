@@ -13,16 +13,25 @@
 
 class Executor {
 public:
-    explicit Executor(const int thread_num = 4) : queue_(std::make_shared<ThreadSafeQueue<ITask> >()) {
+    explicit Executor(const int thread_num = 4) : queue_(
+        std::make_shared<ThreadSafeQueue<std::shared_ptr<ITask> > >()) {
         for (int i = 0; i < thread_num; i++)
-            workers.emplace_back(worker_thread, queue_);
+            workers.emplace_back(worker_thread, this);
     };
 
-    ~Executor() = default; // TODO: graceful shutdown? idk if here
+    ~Executor() {
+        shutdown_ = true;
+
+        for (auto &worker: workers) {
+            if (worker.joinable()) {
+                worker.join();
+            }
+        }
+    }
 
     template<typename R, typename Func, typename... Args>
     std::shared_ptr<Task<R> > compute(Func &&f, Args &&... args) {
-        std::function<R()> task_function = std::bind(f, args);
+        std::function<R()> task_function = std::bind(f, args...);
         auto task = std::make_shared<Task<R> >(Task<R>(task_function));
         queue_->enqueue(task);
         return task;
@@ -30,13 +39,16 @@ public:
 
 private:
     std::vector<std::thread> workers;
-    std::shared_ptr<ThreadSafeQueue<ITask> > queue_{}; // TODO queue of shared_ptr?
+    std::shared_ptr<ThreadSafeQueue<std::shared_ptr<ITask> > > queue_;
+    std::atomic<bool> shutdown_;
 
-    [[noreturn]] static void worker_thread(const std::shared_ptr<ThreadSafeQueue<ITask> > &queue) {
-        while (true) {
-            // TODO change while
-            if (queue->is_empty()) continue;
-            ITask task = queue->dequeue();
+    // TODO for now its very simple
+    void worker_thread() {
+        while (!shutdown_) {
+            if (queue_->is_empty()) continue;
+            auto task = queue_->dequeue();
+            task->execute();
+            task->set_completed();
         }
     }
 };

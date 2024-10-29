@@ -6,4 +6,5 @@ target_link_libraries(tests PRIVATE thread_pool)
 add_executable(lib_tests
         tests.cpp
         test_thread_safe_queue.cpp
+        test_executor.cpp
 )
