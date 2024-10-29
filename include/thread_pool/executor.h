@@ -10,7 +10,7 @@
 // class IThreadPool {
 // };
 
-
+// TODO runtime management of adjusting threads/detecting ideal number
 class Executor {
 public:
     explicit Executor(const int thread_num = 4) : queue_(
@@ -29,10 +29,11 @@ public:
         }
     }
 
+    // TODO rework to std::futures
     template<typename R, typename Func, typename... Args>
     std::shared_ptr<Task<R> > compute(Func &&f, Args &&... args) {
         std::function<R()> task_function = std::bind(f, args...);
-        auto task = std::make_shared<Task<R> >(Task<R>(task_function));
+        auto task = std::make_shared<Task<R> >(task_function);
         queue_->enqueue(task);
         return task;
     }
@@ -43,6 +44,8 @@ private:
     std::atomic<bool> shutdown_;
 
     // TODO for now its very simple
+    // TODO condition_variable to run the loop stuff, not every ms
+    // TODO handle exceptions so they do not kill threads
     void worker_thread() {
         while (!shutdown_) {
             if (queue_->is_empty()) continue;
