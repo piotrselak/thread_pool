@@ -42,7 +42,7 @@ private:
     std::atomic<bool> shutdown_;
 
     // TODO for now its very simple
-    // TODO condition_variable to run the loop stuff, not every ms
+    // TODO condition_variable to run the loop stuff, not every ms and signal end
     // TODO handle exceptions so they do not kill threads
     void worker_thread() {
         while (!shutdown_) {
