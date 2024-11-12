@@ -23,6 +23,8 @@ public:
         queue_.push(item);
     }
 
+    // Popped item is deleted, so if we want to use returned item
+    // it has to be a shared pointer or something
     T dequeue() {
         std::lock_guard<std::mutex> lock(mtx);
 

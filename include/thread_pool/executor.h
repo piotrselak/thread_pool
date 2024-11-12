@@ -11,8 +11,7 @@
 // TODO runtime management of adjusting threads/detecting ideal number
 class Executor {
 public:
-    explicit Executor(const int thread_num = 4) : queue_(
-        std::make_shared<ThreadSafeQueue<std::shared_ptr<ITask> > >()) {
+    explicit Executor(const int thread_num = 4) {
         for (int i = 0; i < thread_num; i++)
             workers.emplace_back(worker_thread, this);
     };
@@ -33,14 +32,16 @@ public:
 
         std::packaged_task<R()> pt(task_function);
         std::future<R> result = pt.get_future();
-        queue_->enqueue(pt);
+        queue_.enqueue(std::make_shared<std::packaged_task<R()> >(pt));
 
         return result;
     }
 
 private:
     std::vector<std::thread> workers;
-    std::shared_ptr<ThreadSafeQueue<std::packaged_task<std::any()> > > queue_;
+
+    ThreadSafeQueue<std::shared_ptr<std::packaged_task<std::any()> > > queue_;
+
     std::atomic<bool> shutdown_;
 
     // TODO for now its very simple
@@ -48,9 +49,8 @@ private:
     // TODO handle exceptions so they do not kill threads
     void worker_thread() {
         while (!shutdown_) {
-            if (queue_->is_empty()) continue;
-            auto pt = queue_->dequeue();
-            pt();
+            if (queue_.is_empty()) continue;
+            auto pt = queue_.dequeue();
         }
     }
 };

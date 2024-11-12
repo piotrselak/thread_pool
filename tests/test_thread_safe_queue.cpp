@@ -9,6 +9,9 @@ TEST_CASE("ThreadSafeQueue throws exception when empty") {
     CHECK_THROWS_AS(queue.dequeue(), QueueEmptyException);
 }
 
+TEST_CASE("Popped items can be used outside of queue") {
+}
+
 TEST_CASE("ThreadSafeQueue works correctly for concurrent operations") {
     ThreadSafeQueue<int> queue;
 
