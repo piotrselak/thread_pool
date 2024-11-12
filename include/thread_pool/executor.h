@@ -1,6 +1,5 @@
 #pragma once
 
-#include <any>
 #include <memory>
 #include <thread_safe_queue.h>
 #include <thread>
@@ -28,19 +27,17 @@ public:
 
     template<typename R, typename Func, typename... Args>
     std::future<R> compute(Func &&f, Args &&... args) {
-        std::function<R()> task_function = std::bind(f, args...);
-
-        std::packaged_task<R()> pt(task_function);
+        std::packaged_task<R()> pt(std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
         std::future<R> result = pt.get_future();
-        queue_.enqueue(std::make_shared<std::packaged_task<R()> >(pt));
 
+        queue_.enqueue([task = std::make_shared<std::packaged_task<R()> >(std::move(pt))]() { (*task)(); });
         return result;
     }
 
 private:
     std::vector<std::thread> workers;
 
-    ThreadSafeQueue<std::shared_ptr<std::packaged_task<std::any()> > > queue_;
+    ThreadSafeQueue<std::function<void()> > queue_;
 
     std::atomic<bool> shutdown_;
 
@@ -50,7 +47,9 @@ private:
     void worker_thread() {
         while (!shutdown_) {
             if (queue_.is_empty()) continue;
-            auto pt = queue_.dequeue();
+            if (auto task = queue_.dequeue()) {
+                task();
+            }
         }
     }
 };

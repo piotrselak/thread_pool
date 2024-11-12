@@ -47,7 +47,7 @@ TEST_CASE("ThreadSafeQueue works correctly for concurrent operations") {
         };
 
         std::thread th1(f1);
-        // TODO redo with condition variable
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         std::thread th2(f2);
